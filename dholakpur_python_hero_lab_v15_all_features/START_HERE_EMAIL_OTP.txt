@@ -1,0 +1,19 @@
+EMAIL OTP - START HERE
+
+The ZIP cannot contain your personal Gmail credentials.
+On the first run, run.bat opens a one-time Gmail OTP setup wizard.
+
+1. Turn on 2-Step Verification on the sender Google account.
+2. Create a Google App Password.
+3. In the setup window, enter the sender Gmail and the 16-character App Password.
+4. The wizard tests the SMTP login before the website starts.
+5. Create a student account. The OTP is sent to the student's email.
+6. The student account is created only after the OTP is verified.
+
+Important:
+- Do NOT use your normal Gmail password.
+- Do NOT share the App Password in chat.
+- Keep the local project folder private because .env contains the SMTP password.
+
+Google help:
+https://support.google.com/mail/answer/185833?hl=en-IN

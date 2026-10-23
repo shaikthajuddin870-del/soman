@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Dashboard • Dholakpur Python Hero Lab</title>
+<link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}">
+<style>
+.progress-select{min-width:260px;padding:12px 14px;border:1px solid rgba(0,0,0,.12);border-radius:12px;background:var(--card,#fff);font:inherit}
+.progress-empty{padding:28px;border:1px dashed rgba(0,0,0,.18);border-radius:16px;text-align:center;color:#667085;margin-top:12px}
+.progress-panel{margin-top:14px}.progress-student-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px;border-radius:16px;background:linear-gradient(135deg,rgba(255,193,7,.16),rgba(33,150,243,.10))}.progress-student-head h3{margin:4px 0 0}.overall-badge{display:flex;align-items:center;gap:10px}.overall-badge strong{font-size:1.25rem}.overall-badge span{padding:5px 10px;border-radius:999px;background:#fff;font-weight:800}
+.module-chart{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:end;margin-top:20px}.module-column{min-width:0;text-align:center}.module-track{height:190px;border-radius:14px 14px 8px 8px;background:rgba(100,116,139,.12);display:flex;align-items:flex-end;overflow:hidden;border:1px solid rgba(100,116,139,.15)}.module-fill{width:100%;background:linear-gradient(180deg,#ffca28,#ff7043);border-radius:12px 12px 0 0;transition:height .45s ease}.module-count{font-weight:800;margin:8px 0 5px}.module-name{font-size:.88rem;font-weight:700}.module-legend{display:flex;justify-content:space-between;margin-top:10px;font-size:.82rem;color:#667085}
+.all-students-progress{margin-top:26px;padding-top:20px;border-top:1px solid rgba(0,0,0,.08)}.student-progress-row{display:grid;grid-template-columns:minmax(130px,220px) 1fr 70px;gap:12px;align-items:center;margin:12px 0}.student-progress-name{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.student-track{height:12px;background:rgba(100,116,139,.13);border-radius:999px;overflow:hidden}.student-fill{height:100%;background:linear-gradient(90deg,#42a5f5,#7e57c2);border-radius:999px}.student-percent{text-align:right;font-weight:800}
+@media(max-width:760px){.module-chart{grid-template-columns:repeat(2,1fr)}.student-progress-row{grid-template-columns:1fr 55px}.student-progress-row .student-track{grid-column:1/-1;grid-row:2}.progress-student-head{align-items:flex-start;flex-direction:column}}
+
+.progress-top-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;padding:13px 18px;border-radius:14px;background:linear-gradient(135deg,#7c5cff,#00b8d9);color:#fff;text-decoration:none;font-weight:900;letter-spacing:.02em;box-shadow:0 10px 24px rgba(124,92,255,.25);border:2px solid rgba(255,255,255,.7)}
+.progress-top-button:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(124,92,255,.32)}
+#learningProgress{scroll-margin-top:20px}
+@media(max-width:700px){.progress-top-button{width:100%;box-sizing:border-box}.admin-actions{width:100%}.email-settings-card .admin-password-form{grid-template-columns:1fr!important}}
+</style>
+</head>
+<body>
+<main class="admin-page">
+  <header class="admin-head">
+    <div>
+      <span class="eyebrow">DHOLAKPUR PYTHON HERO LAB</span>
+      <h1>Admin Dashboard 🛡️</h1>
+      <p>Manage student accounts and monitor login activity. Passwords are never displayed.</p>
+      <a href="#learningProgress" class="progress-top-button" aria-label="Open Student Progress">📊 STUDENT PROGRESS</a>
+    </div>
+    <div>
+      <div class="admin-actions">
+        <a class="btn ghost" href="/">← Open Website</a>
+        <button class="btn ghost" id="refreshBtn">↻ Refresh</button>
+        <button class="btn primary" id="logoutBtn">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <section class="admin-stats admin-stats-five">
+    <div class="stat-card"><span class="stat-icon">👥</span><b>{{ stats.total_users }}</b><span>Total students</span></div>
+    <div class="stat-card"><span class="stat-icon">🟢</span><b>{{ stats.active_users }}</b><span>Students who logged in</span></div>
+    <div class="stat-card"><span class="stat-icon">✨</span><b>{{ stats.today_users }}</b><span>Registered today</span></div>
+    <div class="stat-card"><span class="stat-icon">🔐</span><b>{{ stats.successful_logins }}</b><span>Successful logins</span></div>
+    <div class="stat-card"><span class="stat-icon">⚠️</span><b>{{ stats.failed_logins }}</b><span>Failed attempts</span></div>
+    <div class="stat-card"><span class="stat-icon">🏆</span><b>{{ stats.completed_lessons }}</b><span>Completed lesson records</span></div>
+  </section>
+
+  <section class="admin-card password-card">
+    <div class="admin-section-head">
+      <div><span class="eyebrow">ADMIN SECURITY</span><h2>Change Admin Password 🔐</h2><p class="section-note">Your password is stored as a secure hash. Use at least 8 characters.</p></div>
+    </div>
+    <form id="passwordForm" class="admin-password-form">
+      <input id="currentPassword" type="password" placeholder="Current password" required>
+      <input id="newPassword" type="password" placeholder="New password (8+ characters)" minlength="8" required>
+      <input id="confirmPassword" type="password" placeholder="Confirm new password" minlength="8" required>
+      <button class="btn primary" type="submit">Change Password</button>
+      <span id="passwordMessage" class="auth-hint"></span>
+    </form>
+  </section>
+
+  <section class="admin-card email-settings-card">
+    <div class="admin-section-head">
+      <div><span class="eyebrow">EMAIL VERIFICATION</span><h2>OTP Email Setup 📧</h2><p class="section-note">Student accounts are created only after the OTP is verified. Configure the sender here, then send a test email.</p></div>
+      <span id="emailStatusBadge" class="status failed">Not configured</span>
+    </div>
+    <form id="emailSettingsForm" class="admin-password-form" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+      <input id="smtpHost" value="smtp.gmail.com" placeholder="SMTP host" required>
+      <input id="smtpPort" value="587" placeholder="SMTP port" required>
+      <input id="smtpUser" type="email" placeholder="Sender Gmail address" required>
+      <input id="smtpFrom" type="email" placeholder="From address (same as sender)">
+      <input id="smtpPassword" type="password" placeholder="Gmail App Password" autocomplete="new-password">
+      <button class="btn primary" type="submit">Save Email Settings</button>
+      <span id="emailSettingsMessage" class="auth-hint" style="grid-column:1/-1"></span>
+    </form>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
+      <input id="testEmail" type="email" placeholder="Test recipient email" style="min-width:280px">
+      <button class="btn ghost" id="testEmailBtn" type="button">Send Test OTP 📩</button>
+      <span id="testEmailMessage" class="auth-hint"></span>
+    </div>
+    <small class="security-note">For Gmail, use a Google App Password, not your normal Gmail password. Google requires 2-Step Verification for App Passwords.</small>
+  </section>
+
+  <section class="admin-card">
+    <div class="admin-section-head">
+      <div>
+        <span class="eyebrow">ACCOUNT MANAGEMENT</span>
+        <h2>Student Accounts</h2>
+      </div>
+      <button class="btn ghost" id="exportUsersBtn">⬇ Export CSV</button>
+    </div>
+    <div class="admin-filters">
+      <input id="userSearch" type="search" placeholder="🔎 Search name, email or phone...">
+      <select id="userRole"><option value="all">All roles</option><option value="student">Students</option><option value="admin">Admins</option></select>
+      <select id="userActivity"><option value="all">All activity</option><option value="active">Logged in</option><option value="never">Never logged in</option></select>
+    </div>
+    <div class="filter-result" id="userResult">Showing {{ users|length }} accounts</div>
+    <div class="table-wrap">
+      <table id="usersTable">
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Registered</th><th>Last Login</th><th>Progress</th><th>Action</th></tr></thead>
+        <tbody>
+        {% for u in users %}
+          <tr data-search="{{ (u.name ~ ' ' ~ u.email ~ ' ' ~ (u.phone or ''))|lower }}" data-role="{{u.role}}" data-active="{{ 'active' if u.last_login else 'never' }}">
+            <td>#{{u.id}}</td><td><strong>{{u.name}}</strong></td><td>{{u.email}}</td><td>{{u.phone or '—'}}</td>
+            <td><span class="role {{u.role}}">{{u.role}}</span></td><td>{{u.created_at}}</td><td>{{u.last_login or 'Never'}}</td><td>{{u.completed_lessons }}/40</td>
+            <td>{% if u.role!='admin' %}<button class="danger-btn" data-id="{{u.id}}">Delete</button>{% else %}<span class="protected">Protected</span>{% endif %}</td>
+          </tr>
+        {% else %}<tr><td colspan="9" class="empty-state">No accounts found.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="admin-card progress-dashboard" id="learningProgress">
+    <div class="admin-section-head">
+      <div>
+        <span class="eyebrow">LEARNING PROGRESS</span>
+        <h2>Student Module Completion 📊</h2>
+        <p class="section-note">Select a student to see how many lessons they completed in each of the 4 modules.</p>
+      </div>
+      <select id="progressStudent" class="progress-select">
+        <option value="">Select a student</option>
+        {% for s in student_progress %}<option value="{{s.id}}">{{s.name}} — {{s.completed}}/40 lessons</option>{% endfor %}
+      </select>
+    </div>
+    <div id="progressEmpty" class="progress-empty">Choose a student above to display the graph.</div>
+    <div id="progressPanel" class="progress-panel" hidden>
+      <div class="progress-student-head"><div><span class="eyebrow" id="progressStudentLabel">Student</span><h3 id="progressStudentName">—</h3></div><div class="overall-badge"><strong id="overallCompleted">0/40</strong><span id="overallPercent">0%</span></div></div>
+      <div class="module-chart" id="moduleChart"></div>
+      <div class="module-legend"><span>Each module = 10 lessons</span><span>▮ Completed &nbsp; ▯ Remaining</span></div>
+    </div>
+    <div class="all-students-progress">
+      <h3>All Students — Overall Completion</h3>
+      <div id="studentBars"></div>
+    </div>
+  </section>
+
+  <section class="admin-card">
+    <div class="admin-section-head">
+      <div><span class="eyebrow">SECURITY MONITOR</span><h2>Login Activity</h2><p class="section-note">Latest 100 login attempts. Green = successful, red = failed.</p></div>
+      <button class="btn ghost" id="exportLogsBtn">⬇ Export CSV</button>
+    </div>
+    <div class="admin-filters">
+      <input id="logSearch" type="search" placeholder="🔎 Search user or email...">
+      <select id="logStatus"><option value="all">All attempts</option><option value="success">Successful</option><option value="failed">Failed</option></select>
+    </div>
+    <div class="filter-result" id="logResult">Showing {{ logs|length }} records</div>
+    <div class="table-wrap">
+      <table id="logsTable">
+        <thead><tr><th>User</th><th>Identifier</th><th>Status</th><th>IP</th><th>Time</th></tr></thead>
+        <tbody>
+        {% for l in logs %}
+          <tr data-search="{{ ((l.name or '') ~ ' ' ~ (l.email or '') ~ ' ' ~ l.identifier)|lower }}" data-status="{{ 'success' if l.success else 'failed' }}">
+            <td><strong>{{l.name or 'Unknown'}}</strong><small class="subtext">{{l.email or 'No matching account'}}</small></td><td>{{l.identifier}}</td>
+            <td><span class="status {{'success' if l.success else 'failed'}}">{{'Success' if l.success else 'Failed'}}</span></td><td>{{l.ip or '—'}}</td><td>{{l.login_at}}</td>
+          </tr>
+        {% else %}<tr><td colspan="5" class="empty-state">No login activity yet.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="admin-footer-note">🔒 Student passwords are stored as secure hashes and are never shown in this dashboard.</div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+function filterUsers(){
+  const q=$('#userSearch').value.trim().toLowerCase(), role=$('#userRole').value, activity=$('#userActivity').value;
+  let shown=0;
+  $$('#usersTable tbody tr[data-search]').forEach(r=>{
+    const ok=(!q||r.dataset.search.includes(q))&&(role==='all'||r.dataset.role===role)&&(activity==='all'||r.dataset.active===activity);
+    r.style.display=ok?'':'none'; if(ok) shown++;
+  }); $('#userResult').textContent=`Showing ${shown} account${shown===1?'':'s'}`;
+}
+function filterLogs(){
+  const q=$('#logSearch').value.trim().toLowerCase(), status=$('#logStatus').value; let shown=0;
+  $$('#logsTable tbody tr[data-search]').forEach(r=>{
+    const ok=(!q||r.dataset.search.includes(q))&&(status==='all'||r.dataset.status===status);
+    r.style.display=ok?'':'none'; if(ok) shown++;
+  }); $('#logResult').textContent=`Showing ${shown} record${shown===1?'':'s'}`;
+}
+$('#userSearch').oninput=filterUsers; $('#userRole').onchange=filterUsers; $('#userActivity').onchange=filterUsers;
+$('#logSearch').oninput=filterLogs; $('#logStatus').onchange=filterLogs;
+$('#refreshBtn').onclick=()=>location.reload();
+$('#logoutBtn').onclick=async()=>{await fetch('/api/logout',{method:'POST'});location='/login'};
+$$('.danger-btn').forEach(b=>b.onclick=async()=>{if(!confirm('Delete this student account? This cannot be undone.'))return;const r=await fetch('/api/admin/delete/'+b.dataset.id,{method:'POST'});const d=await r.json();if(!d.ok){alert(d.error||'Could not delete account.');return}location.reload()});
+function csvEscape(v){return '"'+String(v??'').replaceAll('"','""')+'"'}
+function downloadCSV(filename, rows){const blob=new Blob([rows.map(r=>r.map(csvEscape).join(',')).join('\n')],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();URL.revokeObjectURL(a.href)}
+$('#exportUsersBtn').onclick=()=>{const rows=[['ID','Name','Email','Phone','Role','Registered','Last Login']];$$('#usersTable tbody tr[data-search]').forEach(r=>{if(r.style.display==='none')return;const c=[...r.children];rows.push([c[0].innerText.replace('#',''),c[1].innerText,c[2].innerText,c[3].innerText,c[4].innerText,c[5].innerText,c[6].innerText,c[7].innerText])});downloadCSV('dholakpur-student-accounts.csv',rows)};
+$('#exportLogsBtn').onclick=()=>{const rows=[['User','Email','Identifier','Status','IP','Time']];$$('#logsTable tbody tr[data-search]').forEach(r=>{if(r.style.display==='none')return;const c=[...r.children];rows.push([c[0].querySelector('strong')?.innerText||'',c[0].querySelector('.subtext')?.innerText||'',c[1].innerText,c[2].innerText,c[3].innerText,c[4].innerText])});downloadCSV('dholakpur-login-activity.csv',rows)};
+
+async function loadEmailStatus(){
+  try{const r=await fetch('/api/admin/email-status');const d=await r.json();if(!r.ok)return;
+    $('#emailStatusBadge').textContent=d.configured?'Configured':'Not configured';
+    $('#emailStatusBadge').className='status '+(d.configured?'success':'failed');
+    if(d.host)$('#smtpHost').value=d.host; if(d.port)$('#smtpPort').value=d.port; if(d.user)$('#smtpUser').value=d.user; if(d.from_email)$('#smtpFrom').value=d.from_email;
+  }catch(e){}
+}
+$('#emailSettingsForm').onsubmit=async e=>{e.preventDefault();const m=$('#emailSettingsMessage');m.textContent='Saving…';
+  const r=await fetch('/api/admin/save-email-settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:$('#smtpHost').value,port:$('#smtpPort').value,user:$('#smtpUser').value,password:$('#smtpPassword').value,from_email:$('#smtpFrom').value,use_tls:'1'})});
+  const d=await r.json();m.textContent=d.message||d.error||'';if(r.ok){$('#smtpPassword').value='';loadEmailStatus();}
+};
+$('#testEmailBtn').onclick=async()=>{const m=$('#testEmailMessage');m.textContent='Sending…';
+  const r=await fetch('/api/admin/test-email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to_email:$('#testEmail').value})});
+  const d=await r.json();m.textContent=d.message||d.error||'';
+};
+loadEmailStatus();
+
+function escapeHtml(value){return String(value??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));}
+const studentProgress={{ student_progress|tojson }};
+const moduleNames=['Module 1 — Python Basics','Module 2 — Intermediate Python','Module 3 — Libraries & Tools','Module 4 — Practice & Projects'];
+function renderSelectedProgress(id){
+  const empty=$('#progressEmpty'), panel=$('#progressPanel');
+  const s=studentProgress.find(x=>String(x.id)===String(id));
+  if(!s){panel.hidden=true;empty.style.display='block';return;}
+  empty.style.display='none';panel.hidden=false;
+  $('#progressStudentLabel').textContent=s.email;
+  $('#progressStudentName').textContent=s.name;
+  $('#overallCompleted').textContent=`${s.completed}/40`;
+  $('#overallPercent').textContent=`${Math.round((s.completed/40)*100)}%`;
+  $('#moduleChart').innerHTML=s.modules.map((n,i)=>`<div class="module-column"><div class="module-track"><div class="module-fill" style="height:${n*10}%" title="${n}/10 completed"></div></div><div class="module-count">${n}/10</div><div class="module-name">${moduleNames[i]}</div></div>`).join('');
+}
+function renderAllStudentProgress(){
+  const box=$('#studentBars');
+  if(!studentProgress.length){box.innerHTML='<div class="empty-state">No student progress yet.</div>';return;}
+  box.innerHTML=studentProgress.map(s=>{const pct=Math.round((s.completed/40)*100);return `<div class="student-progress-row"><div class="student-progress-name">${escapeHtml(s.name)}</div><div class="student-track"><div class="student-fill" style="width:${pct}%"></div></div><div class="student-percent">${pct}%</div></div>`}).join('');
+}
+$('#progressStudent').onchange=e=>renderSelectedProgress(e.target.value);
+renderAllStudentProgress();
+// Automatically show the first student so the graph is visible immediately.
+if(studentProgress.length){
+  $('#progressStudent').value=String(studentProgress[0].id);
+  renderSelectedProgress(studentProgress[0].id);
+} else {
+  $('#progressEmpty').innerHTML='👨‍🎓 No student accounts yet. Create a student account, log in as that student, and mark lessons as complete. Their progress will appear here automatically.';
+}
+</script>
+</body></html>

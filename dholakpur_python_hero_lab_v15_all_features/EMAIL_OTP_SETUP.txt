@@ -1,0 +1,20 @@
+EMAIL OTP SETUP
+===============
+
+Why OTP is not arriving:
+This project needs a real sender mailbox to send the OTP. The ZIP cannot contain your private mailbox password, so SMTP must be configured once on your computer.
+
+Recommended Gmail setup:
+1. Open your Google Account Security settings.
+2. Turn on 2-Step Verification.
+3. Create an App Password for this project.
+4. Start run.bat and login as Admin.
+5. Open OTP Email Setup.
+6. Enter your Gmail address and App Password, then Save Email Settings.
+7. Enter a test recipient and click Send Test OTP.
+8. Only after the test email arrives should students register.
+
+Alternative:
+Run setup_email.bat and enter the sender Gmail address + App Password.
+
+NEVER share your Gmail password or App Password in chat or commit .env to GitHub.
